@@ -4,8 +4,23 @@ import User from "../models/User.js";
 import { requestEmailOtp, verifyEmailOtp } from "../utils/emailOtp.js";
 import slugify from "../utils/slug.js";
 
+const MIN_PASSWORD_LENGTH = 8;
+const DEFAULT_TIMEZONE = "Africa/Lagos";
+
 const createToken = (userId) => {
   return jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: "7d" });
+};
+
+const normalizeEmail = (email) =>
+  typeof email === "string" ? email.toLowerCase().trim() : "";
+
+const isValidTimeZone = (timeZone) => {
+  try {
+    new Intl.DateTimeFormat(undefined, { timeZone });
+    return true;
+  } catch (e) {
+    return false;
+  }
 };
 
 const toUserResponse = (user) => ({
@@ -17,12 +32,56 @@ const toUserResponse = (user) => ({
   businessDescription: user.businessDescription,
   brandTheme: user.brandTheme,
   brandAccent: user.brandAccent,
-  timezone: user.timezone,
+  timeZone: user.timeZone,
   googleCalendarConnected: user.googleCalendarConnected,
   googleCalendarId: user.googleCalendarId,
   payoutDetails: user.payoutDetails,
   stripeConfigured: Boolean(process.env.STRIPE_SECRET_KEY),
 });
+
+const generateUniqueSlug = async (source, excludeId) => {
+  const base = slugify(source) || "business";
+  let finalSlug = base;
+  let counter = 1;
+
+  const filterFor = (slug) =>
+    excludeId ? { slug, _id: { $ne: excludeId } } : { slug };
+
+  while (await User.exists(filterFor(finalSlug))) {
+    finalSlug = `${base}-${counter}`;
+    counter += 1;
+  }
+
+  return finalSlug;
+};
+
+const handleError = (res, error) => {
+  if (error.name === "ValidationError") {
+    const message = Object.values(error.errors)
+      .map((e) => e.message)
+      .join(", ");
+    return res.status(400).json({ message });
+  }
+
+  if (error.code === 11000) {
+    if (error.keyPattern?.email) {
+      return res.status(400).json({ message: "Email already exists" });
+    }
+    return res.status(409).json({
+      message: "That business name is already taken. Please try again.",
+    });
+  }
+
+  if (error.statusCode) {
+    return res.status(error.statusCode).json({ message: error.message });
+  }
+
+  console.error(error);
+  return res.status(500).json({
+    message: "Server error",
+    error: process.env.NODE_ENV === "production" ? undefined : error.message,
+  });
+};
 
 // REGISTER
 export const registerUser = async (req, res) => {
@@ -37,17 +96,31 @@ export const registerUser = async (req, res) => {
       emailOtp,
     } = req.body;
 
-    if (!name || !email || !password) {
+    const cleanName = typeof name === "string" ? name.trim() : "";
+    const normalizedEmail = normalizeEmail(email);
+
+    if (
+      !cleanName ||
+      !normalizedEmail ||
+      typeof password !== "string" ||
+      !password
+    ) {
       return res.status(400).json({
         message: "Name, email and password are required",
       });
     }
-    const normalizedEmail = email.toLowerCase().trim();
 
-    const existingUser = await User.findOne({
-      email: normalizedEmail,
-    });
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      return res.status(400).json({
+        message: `Password must be at least ${MIN_PASSWORD_LENGTH} characters`,
+      });
+    }
 
+    if (timeZone && !isValidTimeZone(timeZone)) {
+      return res.status(400).json({ message: "Invalid time zone" });
+    }
+
+    const existingUser = await User.exists({ email: normalizedEmail });
     if (existingUser) {
       return res.status(400).json({
         message: "Email already exists",
@@ -67,24 +140,20 @@ export const registerUser = async (req, res) => {
       });
     }
 
-    const baseslug = slugify(businessName || name) || "business";
-    let finalSlug = baseslug;
-    let counter = 1;
-
-    while (await User.findOne({ slug: finalSlug })) {
-      finalSlug = `${baseslug}-${counter}`;
-      counter += 1;
-    }
-
-    const hashPassword = await bcrypt.hash(password, 10);
+    const cleanBusinessName =
+      typeof businessName === "string" ? businessName.trim() : "";
+    const finalSlug = await generateUniqueSlug(cleanBusinessName || cleanName);
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = await User.create({
-      name,
+      name: cleanName,
       email: normalizedEmail,
-      password: hashPassword,
+      password: hashedPassword,
       slug: finalSlug,
-      businessName: businessName || "",
-      timeZone: timeZone || "Africa/Lagos",
+      businessName: cleanBusinessName,
+      businessDescription:
+        typeof businessDescription === "string" ? businessDescription : "",
+      timeZone: timeZone || DEFAULT_TIMEZONE,
     });
 
     const token = createToken(user._id);
@@ -95,18 +164,14 @@ export const registerUser = async (req, res) => {
       user: toUserResponse(user),
     });
   } catch (error) {
-    return res.status(500).json({
-      message: "Server error",
-      error: error.message,
-    });
+    return handleError(res, error);
   }
 };
 
 // REQUEST REGISTRATION OTP
 export const requestRegistrationOtp = async (req, res) => {
   try {
-    const { email } = req.body;
-    const normalizedEmail = email?.toLowerCase().trim();
+    const normalizedEmail = normalizeEmail(req.body.email);
 
     if (!normalizedEmail) {
       return res.status(400).json({
@@ -114,10 +179,7 @@ export const requestRegistrationOtp = async (req, res) => {
       });
     }
 
-    const existingUser = await User.findOne({
-      email: normalizedEmail,
-    });
-
+    const existingUser = await User.exists({ email: normalizedEmail });
     if (existingUser) {
       return res.status(400).json({
         message: "Email already exists.",
@@ -134,18 +196,15 @@ export const requestRegistrationOtp = async (req, res) => {
       result,
     });
   } catch (error) {
-    return res.status(503).json({
-      message: "Error request registration otp",
-      error: error.message,
-    });
+    return handleError(res, error);
   }
 };
 
 // VERIFY REGISTRATION OTP
 export const verifyRegistrationOtp = async (req, res) => {
   try {
-    const { email, emailOtp } = req.body;
-    const normalizedEmail = email?.toLowerCase().trim();
+    const { emailOtp } = req.body;
+    const normalizedEmail = normalizeEmail(req.body.email);
 
     if (!normalizedEmail || !emailOtp) {
       return res.status(400).json({
@@ -153,7 +212,7 @@ export const verifyRegistrationOtp = async (req, res) => {
       });
     }
 
-    const existingUser = await User.findOne({ email: normalizedEmail });
+    const existingUser = await User.exists({ email: normalizedEmail });
     if (existingUser) {
       return res.status(400).json({
         message: "Email already exists.",
@@ -177,27 +236,25 @@ export const verifyRegistrationOtp = async (req, res) => {
       message: "OTP verified",
     });
   } catch (error) {
-    res.status(500).json({
-      message: "Server error",
-      error: error.message,
-    });
+    return handleError(res, error);
   }
 };
 
 // LOGIN USER
 export const loginUser = async (req, res) => {
   try {
-    const { email, password } = req.body;
-    if (!email || !password) {
+    const { password } = req.body;
+    const normalizedEmail = normalizeEmail(req.body.email);
+
+    if (!normalizedEmail || typeof password !== "string" || !password) {
       return res.status(400).json({
         message: "Email and password are required",
       });
     }
 
-    const normalizedEmail = email.toLowerCase().trim();
-    const user = await User.findOne({
-      email: normalizedEmail,
-    });
+    const user = await User.findOne({ email: normalizedEmail }).select(
+      "+password"
+    );
     if (!user) {
       return res.status(401).json({
         message: "Invalid credentials",
@@ -218,17 +275,14 @@ export const loginUser = async (req, res) => {
       user: toUserResponse(user),
     });
   } catch (error) {
-    res.status(500).json({
-      message: "Server error",
-      error: error.message,
-    });
+    return handleError(res, error);
   }
 };
 
 // GET MY PROFILE
 export const getMe = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select("-password");
+    const user = await User.findById(req.user.id);
     if (!user) {
       return res.status(404).json({
         message: "User not found",
@@ -239,46 +293,44 @@ export const getMe = async (req, res) => {
       user: toUserResponse(user),
     });
   } catch (error) {
-    res.status(500).json({
-      message: "Server error",
-      error: error.message,
-    });
+    return handleError(res, error);
   }
 };
 
 // UPDATE PROFILE
 export const updateProfile = async (req, res) => {
   try {
-    const {
-      businessName,
-      businessDescription,
-      timezone,
-      brandTheme,
-      brandAccent,
-    } = req.body;
+    const { businessName, businessDescription, brandTheme, brandAccent } =
+      req.body;
+    const timeZone = req.body.timeZone ?? req.body.timezone;
 
     const user = await User.findById(req.user.id);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    if (businessName !== undefined) user.businessName = businessName;
+    if (timeZone !== undefined) {
+      if (!isValidTimeZone(timeZone)) {
+        return res.status(400).json({ message: "Invalid time zone" });
+      }
+      user.timeZone = timeZone;
+    }
+
     if (businessDescription !== undefined)
       user.businessDescription = businessDescription;
-    if (timezone !== undefined) user.timezone = timezone;
     if (brandTheme !== undefined) user.brandTheme = brandTheme;
     if (brandAccent !== undefined) user.brandAccent = brandAccent;
 
-    const baseSlug = slugify(user.businessName || user.name) || "business";
-    let finalSlug = baseSlug;
-    let counter = 1;
-
-    while (await User.findOne({ slug: finalSlug, _id: { $ne: user._id } })) {
-      finalSlug = `${baseSlug}-${counter}`;
-      counter += 1;
+    if (typeof businessName === "string") {
+      const cleanBusinessName = businessName.trim();
+      if (cleanBusinessName !== user.businessName) {
+        user.businessName = cleanBusinessName;
+        user.slug = await generateUniqueSlug(
+          cleanBusinessName || user.name,
+          user._id
+        );
+      }
     }
-
-    user.slug = finalSlug;
 
     await user.save();
 
@@ -287,6 +339,6 @@ export const updateProfile = async (req, res) => {
       user: toUserResponse(user),
     });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    return handleError(res, error);
   }
 };
