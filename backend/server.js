@@ -5,6 +5,10 @@ import http from "http";
 import { connectDB } from "./config/db.js";
 import authRouter from "./routes/authRoutes.js";
 import serviceRouter from "./routes/serviceRoutes.js";
+import availabilityRouter from "./routes/availabilityRoutes.js";
+import integrationRouter from "./routes/integrationRoutes.js";
+import bookingRouter from "./routes/bookingRoutes.js";
+import paymentRouter from "./routes/paymentRoutes.js";
 
 const PORT = process.env.PORT || 8000;
 const app = express();
@@ -24,6 +28,10 @@ app.get("/", (req, res) => {
 
 app.use("/api/auth", authRouter);
 app.use("/api/services", serviceRouter);
+app.use("/api/availability", availabilityRouter);
+app.use("/api/integrations", integrationRouter);
+app.use("/api/bookings", bookingRouter);
+app.use("/api/payments", paymentRouter);
 
 const server = http.createServer(app);
 

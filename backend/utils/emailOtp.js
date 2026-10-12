@@ -82,7 +82,12 @@ export const requestEmailOtp = async ({ email, purpose }) => {
   };
 };
 
-export const verifyEmailOtp = async ({ email, purpose, code, consume = false }) => {
+export const verifyEmailOtp = async ({
+  email,
+  purpose,
+  code,
+  consume = false,
+}) => {
   const cleanEmail = normalizeEmail(email);
   const cleanCode = String(code ?? "").trim();
 
