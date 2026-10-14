@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const client = axios.create({
-  baseURL: import.meta.env.NEXT_API_URL || "http://localhost:8000/api",
+  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api",
 });
 
 client.interceptors.request.use((config) => {

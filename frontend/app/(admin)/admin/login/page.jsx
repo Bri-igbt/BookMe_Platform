@@ -1,10 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation.js'
+import { useRouter } from 'next/navigation'
 import { adminLogin } from '@/app/api/admin.js'
-import logo from '@/app/assets/logo.png' 
-import { adminLoginPageStyles as s } from '@/app/assets/dummyStyles.jsx' 
+import logo from "@/app/assets/logo.png"
+import { adminLoginPageStyles as s } from '@/app/assets/dummyStyles.jsx'
 import Image from 'next/image'
 
 const page = () => {
@@ -13,29 +13,49 @@ const page = () => {
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState("");
 
+
+
+
     const handleSubmit = async (event) => {
         event.preventDefault();
+
+        console.log("Login form submitted");
+
         setLoading(true);
         setMessage("");
 
         try {
             const { data } = await adminLogin(form);
-            if (data.token) {
-                localStorage.setItem("adminToken", data.token);
-            };
-            router.push("/admin/dashboard");
 
+            console.log("Admin login response:", data);
+
+            if (!data.token) {
+                throw new Error("No token received from the server.");
+            }
+
+            localStorage.setItem("adminToken", data.token);
+
+            router.replace("/admin/dashboard");
         } catch (error) {
-            setMessage(error.response?.data?.message || "Admin login failed");
+            console.error("Admin login failed:", error);
 
+            setMessage(
+                error.response?.data?.message ||
+                error.message ||
+                "Admin login failed"
+            );
         } finally {
             setLoading(false);
-        };
-    }
+        }
+    };
+
+
+
 
     return (
         <div className={s.pageContainer}>
             <div className={s.card}>
+                {/* left decorative panel */}
                 <div className={s.leftPanel}>
                     <div className={s.leftContent}>
                         <p className={s.leftEyebrow}>System Access</p>
@@ -60,6 +80,7 @@ const page = () => {
                     </div>
                 </div>
 
+                {/* right form panel */}
                 <div className={s.rightPanel}>
                     <h2 className={s.formTitle}>Admin Login</h2>
                     <p className={s.formSubtitle}>
@@ -74,7 +95,7 @@ const page = () => {
                             <input
                                 type="email"
                                 value={form.email}
-                                onChange={(event) => setForm((prev) => ({ ...prev, email: email.target.value }))}
+                                onChange={(event) => setForm((prev) => ({ ...prev, email: event.target.value }))}
                                 className={s.textInput}
                                 placeholder='Enter admin email'
                                 required

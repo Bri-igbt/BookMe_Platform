@@ -11,16 +11,3 @@ build/
 .env.*
 !.env.example
 
-# Logs
-npm-debug.log*
-yarn-debug.log*
-pnpm-debug.log*
-
-# macOS
-.DS_Store
-
-# Deployment
-.vercel/
-
-# TypeScript build output
-*.tsbuildinfo

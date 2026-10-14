@@ -24,6 +24,13 @@ connectDB();
 
 // ROUTES
 
+app.use((req, res, next) => {
+  res.on("finish", () =>
+    console.log(req.method, req.originalUrl, res.statusCode)
+  );
+  next();
+});
+
 app.get("/", (req, res) => {
   res.send("API WORKING");
 });
