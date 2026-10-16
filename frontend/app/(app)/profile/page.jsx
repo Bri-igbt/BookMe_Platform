@@ -1,11 +1,13 @@
+'use client'
+
 import React from 'react'
 
 const page = () => {
-    return (
-        <div >
-            page vodo
-        </div>
-    )
+  return (
+    <div>
+      
+    </div>
+  )
 }
 
 export default page

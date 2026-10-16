@@ -1,15 +1,18 @@
 import express from "express";
+import auth from "../middleware/auth.js";
 import {
   listBookings,
-  rescheduleBooking,
   updateBookingStatus,
+  rescheduleBooking,
 } from "../controllers/bookingController.js";
-import auth from "../middleware/auth.js";
 
 const bookingRouter = express.Router();
 
-bookingRouter.get("/", auth, listBookings);
-bookingRouter.patch("/:id", auth, updateBookingStatus);
-bookingRouter.patch("/:id/reschedule", auth, rescheduleBooking);
+
+bookingRouter.use(auth);
+
+bookingRouter.get("/", listBookings);
+bookingRouter.put("/:id/status", updateBookingStatus);
+bookingRouter.put("/:id/reschedule", rescheduleBooking);
 
 export default bookingRouter;

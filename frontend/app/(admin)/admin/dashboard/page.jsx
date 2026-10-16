@@ -4,16 +4,16 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getAdminDashboard, updateWithdrawalStatus } from "@/app/api/admin.js";
 import {
-    Wallet,
-    TrendingUp,
-    Landmark,
-    CheckCircle,
-    XOctagon,
-    Clock,
-    ShieldCheck,
-    Users,
-    DollarSign,
-    UserCheck,
+	Wallet,
+	TrendingUp,
+	Landmark,
+	CheckCircle,
+	XOctagon,
+	Clock,
+	ShieldCheck,
+	Users,
+	DollarSign,
+	UserCheck,
 } from 'lucide-react';
 import logo from '@/app/assets/logo.png';
 import { adminDashboardPageStyles as s } from "@/app/assets/dummyStyles.jsx";
@@ -21,501 +21,501 @@ import Image from "next/image";
 import Link from "next/link";
 
 const formatMoney = (amount = 0, currency = "NGN") =>
-    new Intl.NumberFormat("en-NG", { style: "currency", currency }).format(
-        (amount || 0) / 100,
-    );
+	new Intl.NumberFormat("en-NG", { style: "currency", currency }).format(
+		(amount || 0) / 100,
+	);
 
 const withdrawalStatuses = ["processing", "paid", "rejected"];
 const terminalWithdrawalStatuses = ["paid", "rejected"];
 
 const isTerminalWithdrawalStatus = (status) =>
-    terminalWithdrawalStatuses.includes(status)
+	terminalWithdrawalStatuses.includes(status)
 
 const formatStatusLabel = (item) =>
-    item
-        ? `${item.slice(0, 1).toUpperCase()}${item.slice(1)}`
-        : "";
+	item
+		? `${item.slice(0, 1).toUpperCase()}${item.slice(1)}`
+		: "";
 
 const AdminDashboardPage = () => {
-    const router = useRouter();
-    const [dashboard, setDashboard] = useState(null);
-    const [message, setMessage] = useState("");
-    const [updatingWithdrawalId, setUpdatingWithdrawalId] = useState("");
-    const [pendingWithdrawalAction, setPendingWithdrawalAction] = useState(null);
+	const router = useRouter();
+	const [dashboard, setDashboard] = useState(null);
+	const [message, setMessage] = useState("");
+	const [updatingWithdrawalId, setUpdatingWithdrawalId] = useState("");
+	const [pendingWithdrawalAction, setPendingWithdrawalAction] = useState(null);
 
-    const handleAuthError = useCallback((error) => {
-        const status = error.response?.status;
+	const handleAuthError = useCallback((error) => {
+		const status = error.response?.status;
 
-        if (status === 401 || status === 403) {
-            localStorage.removeItem("adminToken");
-            router.push("/admin/login");
-            return true;
-        }
+		if (status === 401 || status === 403) {
+			localStorage.removeItem("adminToken");
+			router.push("/admin/login");
+			return true;
+		}
 
-        return false;
-    }, [router]);
+		return false;
+	}, [router]);
 
-    useEffect(() => {
-        if (!localStorage.getItem("adminToken")) {
-            router.push("/admin/login");
-            return undefined;
-        };
+	useEffect(() => {
+		if (!localStorage.getItem("adminToken")) {
+			router.push("/admin/login");
+			return undefined;
+		};
 
-        let isActive = true;
+		let isActive = true;
 
-        getAdminDashboard()
-            .then(({ data }) => {
-                if (isActive) {
-                    setDashboard(data);
-                };
-            })
-            .catch((error) => {
-                if (!isActive || handleAuthError(error)) return;
+		getAdminDashboard()
+			.then(({ data }) => {
+				if (isActive) {
+					setDashboard(data);
+				};
+			})
+			.catch((error) => {
+				if (!isActive || handleAuthError(error)) return;
 
-                setMessage(
-                    error.response?.data?.message || "Could not load admin dashboard"
-                );
-            });
+				setMessage(
+					error.response?.data?.message || "Could not load admin dashboard"
+				);
+			});
 
-        return () => {
-            isActive = false;
-        };
-    }, [router, handleAuthError]);
+		return () => {
+			isActive = false;
+		};
+	}, [router, handleAuthError]);
 
-    const requestWithdrawalStatusChange = (withdrawal, status) => {
-        if (
-            withdrawal.status === status || isTerminalWithdrawalStatus(withdrawal.status)
-        ) {
-            return;
-        }
+	const requestWithdrawalStatusChange = (withdrawal, status) => {
+		if (
+			withdrawal.status === status || isTerminalWithdrawalStatus(withdrawal.status)
+		) {
+			return;
+		}
 
-        setPendingWithdrawalAction({ withdrawal, status })
-    };
+		setPendingWithdrawalAction({ withdrawal, status })
+	};
 
-    const closeWithdrawalConfirm = () => {
-        if (updatingWithdrawalId) return;
-        setPendingWithdrawalAction(null);
-    };
+	const closeWithdrawalConfirm = () => {
+		if (updatingWithdrawalId) return;
+		setPendingWithdrawalAction(null);
+	};
 
-    const changeWithdrawalStatus = async () => {
-        if (!pendingWithdrawalAction) return;
+	const changeWithdrawalStatus = async () => {
+		if (!pendingWithdrawalAction) return;
 
-        const { withdrawal, status } = pendingWithdrawalAction;
-        setUpdatingWithdrawalId(withdrawal._id);
+		const { withdrawal, status } = pendingWithdrawalAction;
+		setUpdatingWithdrawalId(withdrawal._id);
 
-        try {
-            const { data } = await updateWithdrawalStatus(withdrawal._id, { status });
-            setDashboard((prev) => {
-                if (!prev) return prev;
+		try {
+			const { data } = await updateWithdrawalStatus(withdrawal._id, { status });
+			setDashboard((prev) => {
+				if (!prev) return prev;
 
-                return {
-                    ...prev,
-                    summary: data.summary || prev.summary,
-                    withdrawals: prev.withdrawals.map((item) =>
-                        item._id === data.withdrawal._id
-                            ? data.withdrawal
-                            : item,
-                    ),
-                };
-            });
-            setMessage(data.message || `Withdrawal marked as ${status}`);
-        } catch (error) {
-            if (handleAuthError(error)) return;
+				return {
+					...prev,
+					summary: data.summary || prev.summary,
+					withdrawals: prev.withdrawals.map((item) =>
+						item._id === data.withdrawal._id
+							? data.withdrawal
+							: item,
+					),
+				};
+			});
+			setMessage(data.message || `Withdrawal marked as ${status}`);
+		} catch (error) {
+			if (handleAuthError(error)) return;
 
-            setMessage(
-                error.response?.data?.message || "Could not update withdrawal",
-            );
-        } finally {
-            setUpdatingWithdrawalId("");
-            setPendingWithdrawalAction(null);
-        }
-    };
+			setMessage(
+				error.response?.data?.message || "Could not update withdrawal",
+			);
+		} finally {
+			setUpdatingWithdrawalId("");
+			setPendingWithdrawalAction(null);
+		}
+	};
 
-    const logout = () => {
-        localStorage.removeItem("adminToken");
-        router.push("/admin/login");
-    };
+	const logout = () => {
+		localStorage.removeItem("adminToken");
+		router.push("/admin/login");
+	};
 
-    const summary = dashboard?.summary || {};
-    const pendingWithdrawal = pendingWithdrawalAction?.withdrawal;
-    const WithdrawalConfirmIcon =
-        pendingWithdrawalAction?.status === "rejected" ? XOctagon : ShieldCheck;
-    const isConfirmingWithdrawal =
-        pendingWithdrawal && updatingWithdrawalId === pendingWithdrawal._id;
+	const summary = dashboard?.summary || {};
+	const pendingWithdrawal = pendingWithdrawalAction?.withdrawal;
+	const WithdrawalConfirmIcon =
+		pendingWithdrawalAction?.status === "rejected" ? XOctagon : ShieldCheck;
+	const isConfirmingWithdrawal =
+		pendingWithdrawal && updatingWithdrawalId === pendingWithdrawal._id;
 
-    const getPayoutStatusClass = (isComplete) =>
-        isComplete ? s.userPayoutReady : s.userPayoutPending;
+	const getPayoutStatusClass = (isComplete) =>
+		isComplete ? s.userPayoutReady : s.userPayoutPending;
 
-    const getWithdrawalStatusClass = (status) =>
-        s.withdrawalStatusColors[status] || s.withdrawalStatusDefault;
+	const getWithdrawalStatusClass = (status) =>
+		s.withdrawalStatusColors[status] || s.withdrawalStatusDefault;
 
-    const statCards = [
-        {
-            label: "Total Users",
-            value: summary.users || 0,
-            icon: Users,
-            bg: s.statBg1,
-            c: s.statColor1,
-        },
-        {
-            label: "Paid Bookings",
-            value: summary.paidBookings || 0,
-            icon: CheckCircle,
-            bg: s.statBg2,
-            c: s.statColor2,
-        },
-        {
-            label: "Gross Revenue",
-            value: formatMoney(summary.grossRevenue),
-            icon: TrendingUp,
-            bg: s.statBg3,
-            c: s.statColor3,
-        },
-        {
-            label: "Platform Fees",
-            value: formatMoney(summary.platformFees),
-            icon: DollarSign,
-            bg: s.statBg4,
-            c: s.statColor4,
-        },
-        {
-            label: "Provider Payouts",
-            value: formatMoney(summary.providerPayouts),
-            icon: Wallet,
-            bg: s.statBg5,
-            c: s.statColor5,
-        },
-        {
-            label: "Withdrawal Hold",
-            value: formatMoney(summary.withdrawalHolds),
-            icon: Landmark,
-            bg: s.statBg6,
-            c: s.statColor6,
-        },
-    ];
-
-
-
-    return (
-        <div className={s.pageContainer}>
-            <header className={s.header}>
-                <div className={s.headerInner}>
-                    <div className={s.logoRow}>
-                        <Image
-                            src={logo}
-                            alt="BookMe logo"
-                            className={s.logoImg}
-                            width={40}
-                            height={40}
-                        />
-
-                        <Link href='/admin/dashboard' className={s.logoText}>
-                            BookMe
-                            <span className={s.logoAccent}>Admin</span>
-                        </Link>
-                    </div>
-
-                    <div className={s.headerActions}>
-                        <Link href='/' className={s.clientAppLink}>
-                            Client App
-                        </Link>
-                        <button className={s.logoutButton} onClick={logout} type="button">
-                            Log out
-                        </button>
-                    </div>
-                    
-                </div>
-            </header>
-
-            <main className={s.main}>
-                <section className={s.heroSection}>
-                    <div>
-                        <h1 className={s.heroTitle}>
-                            Platform
-                            <span className={s.heroTitleAccent}>Overview</span>
-                        </h1>
-                        <p className={s.heroSubtitle}>
-                            Users, bookings, revenue and active withdrawals.
-                        </p>
-                    </div>
-
-                    {message && (
-                        <div className={s.messageBanner} role="alert">
-                            {message}
-                        </div>
-                    )}
-                    {!dashboard && !message && (
-                        <div className={s.messageBanner}>Loading dashboard...</div>
-                    )}
-                </section>
-
-                <section className={s.statsGrid}>
-                    {statCards.map((stat, i) => (
-                        <div key={i} className={s.statCard}>
-                            <div className={`${s.statIconContainer} ${stat.bg} ${stat.c}`}>
-                                <stat.icon className={s.statIcon} />
-                            </div>
-
-                            <div>
-                                <p className={s.statLabel}> {stat.label} </p>
-                                <p className={s.statValue}> {stat.value} </p>
-                            </div>
-                        </div>
-                    ))}
-                </section>
-
-                <section className={s.tablesGrid}>
-                    <div className={s.tableCard}>
-                        <div className={s.tableHeader}>
-                            <h2 className={s.tableTitle}>
-                                <UserCheck className={s.tableTitleIcon} /> Registered Users
-                            </h2>
-                        </div>
-
-                        <div className={s.tableScrollContainer}>
-                            <table className={s.table}>
-                                <thead>
-                                    <tr className={s.tableHeadRow}>
-                                        <th className={s.th}>Business</th>
-                                        <th className={s.th}>Email</th>
-                                        <th className={s.th}>Booking Link</th>
-                                        <th className={s.th}>Status</th>
-                                    </tr>
-                                </thead>
-
-                                <tbody className={s.tbody}>
-                                    {(dashboard?.users || []).map((user) => (
-                                        <tr key={user._id} className={s.tr}>
-                                            <td className={s.td}>
-                                                <div className={s.userBusinessName}>
-                                                    {user.businessName || user.name}
-                                                </div>
-                                            </td>
-
-                                            <td className={s.tdMuted}>{user.email}</td>
-                                            <td className={s.tdMuted}>/book/{user.slug}</td>
-                                            <td className={s.td}>
-                                                <span className={`${s.payoutStatusBadge} ${getPayoutStatusClass(user.payoutDetails?.isComplete)}`}>
-                                                    {user.payoutDetails?.isComplete
-                                                        ? "Ready"
-                                                        : "Pending Details"
-                                                    }
-                                                </span>
-                                            </td>
-                                        </tr>
-                                    ))}
-
-                                    {dashboard && dashboard.users?.length === 0 && (
-                                        <tr>
-                                            <td className={s.emptyTableCell} colSpan='4'>
-                                                No user found.
-                                            </td>
-                                        </tr>
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <div className={s.withdrawalCard}>
-                        <h2 className={`${s.tableTitle} ${s.sectionTitleSpacing}`}>
-                            <Clock className={s.tableTitleIcon} />
-                            Withdrawal Requests
-                        </h2>
-
-                        <div className={s.withdrawalList}>
-                            {(dashboard?.withdrawals || []).map((withdrawal) => {
-                                const isWithdrawalLocked = isTerminalWithdrawalStatus(
-                                    withdrawal.status,
-                                );
-
-                                return (
-                                    <div key={withdrawal._id} className={s.withdrawalItem}>
-                                        <div className={s.withdrawalItemHeader}>
-                                            <div>
-                                                <p className={s.withdrawalProviderName}>
-                                                    {withdrawal.userId?.businessName || withdrawal.userId?.name || "Deleted user"}
-                                                </p>
-                                            </div>
-
-                                            <p className={s.withdrawalProviderEmail}>
-                                                {withdrawal.userId?.email}
-                                            </p>
+	const statCards = [
+		{
+			label: "Total Users",
+			value: summary.users || 0,
+			icon: Users,
+			bg: s.statBg1,
+			c: s.statColor1,
+		},
+		{
+			label: "Paid Bookings",
+			value: summary.paidBookings || 0,
+			icon: CheckCircle,
+			bg: s.statBg2,
+			c: s.statColor2,
+		},
+		{
+			label: "Gross Revenue",
+			value: formatMoney(summary.grossRevenue),
+			icon: TrendingUp,
+			bg: s.statBg3,
+			c: s.statColor3,
+		},
+		{
+			label: "Platform Fees",
+			value: formatMoney(summary.platformFees),
+			icon: DollarSign,
+			bg: s.statBg4,
+			c: s.statColor4,
+		},
+		{
+			label: "Provider Payouts",
+			value: formatMoney(summary.providerPayouts),
+			icon: Wallet,
+			bg: s.statBg5,
+			c: s.statColor5,
+		},
+		{
+			label: "Withdrawal Hold",
+			value: formatMoney(summary.withdrawalHolds),
+			icon: Landmark,
+			bg: s.statBg6,
+			c: s.statColor6,
+		},
+	];
 
 
-                                            <div className={s.withdrawalAmountCol}>
-                                                <span className={s.withdrawalAmount}>
-                                                    {formatMoney(withdrawal.amount)}
-                                                </span>
-                                                <div className={s.withdrawalStatusWrap}>
-                                                    <span className={`${s.withdrawalStatusBadge} ${getWithdrawalStatusClass(withdrawal.status)}`}>
-                                                        {withdrawal.status}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </div>
 
-                                        <div className={s.withdrawalAccountInfo}>
-                                            <Landmark className={s.withdrawalAccountIcon} />
-                                            {withdrawal.payoutSnapshot?.bankName || "Bank account"}
-                                            {" "}
-                                            •{" "}
-                                            {withdrawal.payoutSnapshot?.accountLast4
-                                                ? `****${withdrawal.payoutSnapshot.accountLast4}`
-                                                : "No account number"
-                                            }
-                                        </div>
+	return (
+		<div className={s.pageContainer}>
+			<header className={s.header}>
+				<div className={s.headerInner}>
+					<div className={s.logoRow}>
+						<Image
+							src={logo}
+							alt="BookMe logo"
+							className={s.logoImg}
+							width={40}
+							height={40}
+						/>
 
-                                        <div className={s.withdrawalActions}>
-                                            {withdrawalStatuses.map((status) => {
-                                                const isCurrentStatus = withdrawal.status === status;
-                                                const isUpdatingThisWithdrawal = updatingWithdrawalId === withdrawal._id;
+						<Link href='/admin/dashboard' className={s.logoText}>
+							BookMe
+							<span className={s.logoAccent}>Admin</span>
+						</Link>
+					</div>
 
-                                                return (
-                                                    <button
-                                                        key={status}
-                                                        type="button"
-                                                        onClick={() => requestWithdrawalStatusChange(withdrawal, status)}
-                                                        disabled={isUpdatingThisWithdrawal || isCurrentStatus || isWithdrawalLocked}
-                                                        className={`${s.withdrawalActionBtn} ${isCurrentStatus ? s.withdrawalActionBtnActive : s.withdrawalActionBtnInactive}`}
-                                                    >
-                                                        {isUpdatingThisWithdrawal && !isCurrentStatus
-                                                            ? "..."
-                                                            : formatStatusLabel(status)
-                                                        }
-                                                    </button>
-                                                )
-                                            })}
-                                        </div>
-                                    </div>
-                                )
-                            })}
+					<div className={s.headerActions}>
+						<Link href='/' className={s.clientAppLink}>
+							Client App
+						</Link>
+						<button className={s.logoutButton} onClick={logout} type="button">
+							Log out
+						</button>
+					</div>
 
-                            {dashboard && dashboard.withdrawals?.length === 0 && (
-                                <div className={s.emptyWithdrawals}>
-                                    <div className={s.emptyWithdrawalsIconCircle}>
-                                        <CheckCircle className={s.emptyWithdrawalsIcon} />
-                                    </div>
+				</div>
+			</header>
 
-                                    <p className={s.emptyWithdrawalsText}>
-                                        No pending withdrawal requests.
-                                    </p>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </section>
+			<main className={s.main}>
+				<section className={s.heroSection}>
+					<div>
+						<h1 className={s.heroTitle}>
+							Platform
+							<span className={s.heroTitleAccent}>Overview</span>
+						</h1>
+						<p className={s.heroSubtitle}>
+							Users, bookings, revenue and active withdrawals.
+						</p>
+					</div>
 
-                <section className={s.recentBookingsCard}>
-                    <h2 className={`${s.tableTitle} ${s.sectionTitleSpacing}`}>
-                        <CheckCircle className={s.tableTitleIcon} /> Recent Paid Bookings
-                    </h2>
-                    <div className={s.tableScrollContainer}>
-                        <table className={s.table}>
-                            <thead>
-                                <tr className={s.tableHeadRow}>
-                                    <th className={s.th}>Provider</th>
-                                    <th className={s.th}>Service</th>
-                                    <th className={s.th}>Gross</th>
-                                    <th className={s.th}>Fees</th>
-                                    <th className={s.th}>Provider Share</th>
-                                    <th className={s.th}>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody className={s.tbody}>
-                                {(dashboard?.recentBookings || []).map((booking) => (
-                                    <tr key={booking._id} className={s.tr}>
-                                        <td className={s.tdBold}>
-                                            {booking.userId?.businessName || booking.userId?.name}
-                                        </td>
-                                        <td className={s.tdMuted}>
-                                            {booking.serviceId?.name || "Service"}
-                                        </td>
-                                        <td className={s.tdBold}>{formatMoney(booking.amount)}</td>
-                                        <td className={s.tdFees}>
-                                            {formatMoney(booking.platformFeeAmount)}
-                                        </td>
-                                        <td className={s.tdEarnings}>
-                                            {formatMoney(booking.providerPayoutAmount)}
-                                        </td>
-                                        <td className={s.td}>
-                                            <span className={s.bookingPayoutBadge}>
-                                                {booking.payoutStatus}
-                                            </span>
-                                        </td>
-                                    </tr>
-                                ))}
-                                {dashboard && dashboard.recentBookings?.length === 0 && (
-                                    <tr>
-                                        <td colSpan="6" className={s.emptyTableCell}>
-                                            No recent transactions.
-                                        </td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
-                </section>
+					{message && (
+						<div className={s.messageBanner} role="alert">
+							{message}
+						</div>
+					)}
+					{!dashboard && !message && (
+						<div className={s.messageBanner}>Loading dashboard...</div>
+					)}
+				</section>
 
-                {pendingWithdrawalAction && (
-                    <div className={s.confirmModalOverlay}>
-                        <div
-                            className={s.confirmModal}
-                            role="dialog"
-                            aria-modal="true"
-                            aria-labelledby="withdrawal-confirm-title"
-                        >
-                            <div className={s.confirmModalIconRow}>
-                                <span className={s.confirmModalIconWrap}>
-                                    <WithdrawalConfirmIcon className={s.confirmModalIcon} />
-                                </span>
-                                <span
-                                    className={`${s.withdrawalStatusBadge} ${getWithdrawalStatusClass(pendingWithdrawalAction.status)}`}
-                                >
-                                    {pendingWithdrawalAction.status}
-                                </span>
-                            </div>
-                            <h3 id="withdrawal-confirm-title" className={s.confirmModalTitle}>
-                                Confirm withdrawal status
-                            </h3>
-                            <p className={s.confirmModalText}>
-                                Are you sure you want to mark this withdrawal as{" "}
-                                {formatStatusLabel(pendingWithdrawalAction.status)}?
-                            </p>
-                            <div className={s.confirmModalMeta}>
-                                <span>
-                                    {pendingWithdrawal?.userId?.businessName ||
-                                        pendingWithdrawal?.userId?.name ||
-                                        "Provider"}
-                                </span>
-                                <strong>{formatMoney(pendingWithdrawal?.amount)}</strong>
-                            </div>
-                            <div className={s.confirmModalActions}>
-                                <button
-                                    type="button"
-                                    onClick={closeWithdrawalConfirm}
-                                    disabled={isConfirmingWithdrawal}
-                                    className={s.confirmModalCancelBtn}
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={changeWithdrawalStatus}
-                                    disabled={isConfirmingWithdrawal}
-                                    className={s.confirmModalConfirmBtn}
-                                >
-                                    {isConfirmingWithdrawal
-                                        ? "Confirming..."
-                                        : `Confirm ${formatStatusLabel(pendingWithdrawalAction.status)}`}
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                )}
-            </main>
-        </div>
-    )
+				<section className={s.statsGrid}>
+					{statCards.map((stat, i) => (
+						<div key={i} className={s.statCard}>
+							<div className={`${s.statIconContainer} ${stat.bg} ${stat.c}`}>
+								<stat.icon className={s.statIcon} />
+							</div>
+
+							<div>
+								<p className={s.statLabel}> {stat.label} </p>
+								<p className={s.statValue}> {stat.value} </p>
+							</div>
+						</div>
+					))}
+				</section>
+
+				<section className={s.tablesGrid}>
+					<div className={s.tableCard}>
+						<div className={s.tableHeader}>
+							<h2 className={s.tableTitle}>
+								<UserCheck className={s.tableTitleIcon} /> Registered Users
+							</h2>
+						</div>
+
+						<div className={s.tableScrollContainer}>
+							<table className={s.table}>
+								<thead>
+									<tr className={s.tableHeadRow}>
+										<th className={s.th}>Business</th>
+										<th className={s.th}>Email</th>
+										<th className={s.th}>Booking Link</th>
+										<th className={s.th}>Status</th>
+									</tr>
+								</thead>
+
+								<tbody className={s.tbody}>
+									{(dashboard?.users || []).map((user) => (
+										<tr key={user._id} className={s.tr}>
+											<td className={s.td}>
+												<div className={s.userBusinessName}>
+													{user.businessName || user.name}
+												</div>
+											</td>
+
+											<td className={s.tdMuted}>{user.email}</td>
+											<td className={s.tdMuted}>/book/{user.slug}</td>
+											<td className={s.td}>
+												<span className={`${s.payoutStatusBadge} ${getPayoutStatusClass(user.payoutDetails?.isComplete)}`}>
+													{user.payoutDetails?.isComplete
+														? "Ready"
+														: "Pending Details"
+													}
+												</span>
+											</td>
+										</tr>
+									))}
+
+									{dashboard && dashboard.users?.length === 0 && (
+										<tr>
+											<td className={s.emptyTableCell} colSpan='4'>
+												No user found.
+											</td>
+										</tr>
+									)}
+								</tbody>
+							</table>
+						</div>
+					</div>
+
+					<div className={s.withdrawalCard}>
+						<h2 className={`${s.tableTitle} ${s.sectionTitleSpacing}`}>
+							<Clock className={s.tableTitleIcon} />
+							Withdrawal Requests
+						</h2>
+
+						<div className={s.withdrawalList}>
+							{(dashboard?.withdrawals || []).map((withdrawal) => {
+								const isWithdrawalLocked = isTerminalWithdrawalStatus(
+									withdrawal.status,
+								);
+
+								return (
+									<div key={withdrawal._id} className={s.withdrawalItem}>
+										<div className={s.withdrawalItemHeader}>
+											<div>
+												<p className={s.withdrawalProviderName}>
+													{withdrawal.userId?.businessName || withdrawal.userId?.name || "Deleted user"}
+												</p>
+											</div>
+
+											<p className={s.withdrawalProviderEmail}>
+												{withdrawal.userId?.email}
+											</p>
+
+
+											<div className={s.withdrawalAmountCol}>
+												<span className={s.withdrawalAmount}>
+													{formatMoney(withdrawal.amount)}
+												</span>
+												<div className={s.withdrawalStatusWrap}>
+													<span className={`${s.withdrawalStatusBadge} ${getWithdrawalStatusClass(withdrawal.status)}`}>
+														{withdrawal.status}
+													</span>
+												</div>
+											</div>
+										</div>
+
+										<div className={s.withdrawalAccountInfo}>
+											<Landmark className={s.withdrawalAccountIcon} />
+											{withdrawal.payoutSnapshot?.bankName || "Bank account"}
+											{" "}
+											•{" "}
+											{withdrawal.payoutSnapshot?.accountLast4
+												? `****${withdrawal.payoutSnapshot.accountLast4}`
+												: "No account number"
+											}
+										</div>
+
+										<div className={s.withdrawalActions}>
+											{withdrawalStatuses.map((status) => {
+												const isCurrentStatus = withdrawal.status === status;
+												const isUpdatingThisWithdrawal = updatingWithdrawalId === withdrawal._id;
+
+												return (
+													<button
+														key={status}
+														type="button"
+														onClick={() => requestWithdrawalStatusChange(withdrawal, status)}
+														disabled={isUpdatingThisWithdrawal || isCurrentStatus || isWithdrawalLocked}
+														className={`${s.withdrawalActionBtn} ${isCurrentStatus ? s.withdrawalActionBtnActive : s.withdrawalActionBtnInactive}`}
+													>
+														{isUpdatingThisWithdrawal && !isCurrentStatus
+															? "..."
+															: formatStatusLabel(status)
+														}
+													</button>
+												)
+											})}
+										</div>
+									</div>
+								)
+							})}
+
+							{dashboard && dashboard.withdrawals?.length === 0 && (
+								<div className={s.emptyWithdrawals}>
+									<div className={s.emptyWithdrawalsIconCircle}>
+										<CheckCircle className={s.emptyWithdrawalsIcon} />
+									</div>
+
+									<p className={s.emptyWithdrawalsText}>
+										No pending withdrawal requests.
+									</p>
+								</div>
+							)}
+						</div>
+					</div>
+				</section>
+
+				<section className={s.recentBookingsCard}>
+					<h2 className={`${s.tableTitle} ${s.sectionTitleSpacing}`}>
+						<CheckCircle className={s.tableTitleIcon} /> Recent Paid Bookings
+					</h2>
+					<div className={s.tableScrollContainer}>
+						<table className={s.table}>
+							<thead>
+								<tr className={s.tableHeadRow}>
+									<th className={s.th}>Provider</th>
+									<th className={s.th}>Service</th>
+									<th className={s.th}>Gross</th>
+									<th className={s.th}>Fees</th>
+									<th className={s.th}>Provider Share</th>
+									<th className={s.th}>Status</th>
+								</tr>
+							</thead>
+							<tbody className={s.tbody}>
+								{(dashboard?.recentBookings || []).map((booking) => (
+									<tr key={booking._id} className={s.tr}>
+										<td className={s.tdBold}>
+											{booking.userId?.businessName || booking.userId?.name}
+										</td>
+										<td className={s.tdMuted}>
+											{booking.serviceId?.name || "Service"}
+										</td>
+										<td className={s.tdBold}>{formatMoney(booking.amount)}</td>
+										<td className={s.tdFees}>
+											{formatMoney(booking.platformFeeAmount)}
+										</td>
+										<td className={s.tdEarnings}>
+											{formatMoney(booking.providerPayoutAmount)}
+										</td>
+										<td className={s.td}>
+											<span className={s.bookingPayoutBadge}>
+												{booking.payoutStatus}
+											</span>
+										</td>
+									</tr>
+								))}
+								{dashboard && dashboard.recentBookings?.length === 0 && (
+									<tr>
+										<td colSpan="6" className={s.emptyTableCell}>
+											No recent transactions.
+										</td>
+									</tr>
+								)}
+							</tbody>
+						</table>
+					</div>
+				</section>
+
+				{pendingWithdrawalAction && (
+					<div className={s.confirmModalOverlay}>
+						<div
+							className={s.confirmModal}
+							role="dialog"
+							aria-modal="true"
+							aria-labelledby="withdrawal-confirm-title"
+						>
+							<div className={s.confirmModalIconRow}>
+								<span className={s.confirmModalIconWrap}>
+									<WithdrawalConfirmIcon className={s.confirmModalIcon} />
+								</span>
+								<span
+									className={`${s.withdrawalStatusBadge} ${getWithdrawalStatusClass(pendingWithdrawalAction.status)}`}
+								>
+									{pendingWithdrawalAction.status}
+								</span>
+							</div>
+							<h3 id="withdrawal-confirm-title" className={s.confirmModalTitle}>
+								Confirm withdrawal status
+							</h3>
+							<p className={s.confirmModalText}>
+								Are you sure you want to mark this withdrawal as{" "}
+								{formatStatusLabel(pendingWithdrawalAction.status)}?
+							</p>
+							<div className={s.confirmModalMeta}>
+								<span>
+									{pendingWithdrawal?.userId?.businessName ||
+										pendingWithdrawal?.userId?.name ||
+										"Provider"}
+								</span>
+								<strong>{formatMoney(pendingWithdrawal?.amount)}</strong>
+							</div>
+							<div className={s.confirmModalActions}>
+								<button
+									type="button"
+									onClick={closeWithdrawalConfirm}
+									disabled={isConfirmingWithdrawal}
+									className={s.confirmModalCancelBtn}
+								>
+									Cancel
+								</button>
+								<button
+									type="button"
+									onClick={changeWithdrawalStatus}
+									disabled={isConfirmingWithdrawal}
+									className={s.confirmModalConfirmBtn}
+								>
+									{isConfirmingWithdrawal
+										? "Confirming..."
+										: `Confirm ${formatStatusLabel(pendingWithdrawalAction.status)}`}
+								</button>
+							</div>
+						</div>
+					</div>
+				)}
+			</main>
+		</div>
+	)
 }
 
 export default AdminDashboardPage
