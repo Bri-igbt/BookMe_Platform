@@ -38,7 +38,7 @@ export const appLayoutStyles = {
     logoutIcon:
         'h-4 w-4',
     loginLink:
-        'rounded-full bg-gradient-to-b from-[#CBB8FF] via-[#9B7BFF] to-[#7D57F5] px-4 py-2 md:px-5 md:py-2.5 text-xs md:text-sm font-semibold text-white shadow-sm hover:opacity-90 transition-opacity',
+        'rounded-full bg-gradient-to-b from-[#CBB8FF] via-[#9B7BFF] to-[#7D57F5] px-4 py-2 md:px-5 md:py-2.5 text-xs md:text-sm font-semibold text-white shadow-sm hover:opacity-90 transition-opacity flex gap-2',
     mobileMenuButton:
         'lg:hidden p-2 rounded-md text-slate-500 hover:text-slate-900 hover:bg-slate-100 outline-none',
     srOnly:
