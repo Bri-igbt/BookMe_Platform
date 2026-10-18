@@ -55,7 +55,6 @@ const page = () => {
   return (
     <div className={s.pageContainer}>
       <div className={s.card}>
-        {/* left decorative panel */}
         <div className={s.leftPanel}>
           <div className={s.leftContent}>
             <p className={s.leftEyebrow}>System Access</p>
@@ -80,7 +79,6 @@ const page = () => {
           </div>
         </div>
 
-        {/* right form panel */}
         <div className={s.rightPanel}>
           <h2 className={s.formTitle}>Admin Login</h2>
           <p className={s.formSubtitle}>

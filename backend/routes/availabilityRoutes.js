@@ -5,6 +5,6 @@ import { listAvailability, saveAvailability } from '../controllers/availabilityC
 const availabilityRouter = express.Router();
 
 availabilityRouter.get('/', auth, listAvailability);
-availabilityRouter.get('/', auth, saveAvailability);
+availabilityRouter.put('/', auth, saveAvailability);
 
 export default availabilityRouter;

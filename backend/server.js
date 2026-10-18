@@ -43,7 +43,7 @@ app.use("/api/integrations", integrationRouter);
 app.use("/api/bookings", bookingRouter);
 app.use("/api/payments", paymentRouter);
 app.use('/api/public', publicRouter);
-app.use("/public", publicRouter);
+
 
 const server = http.createServer(app);
 

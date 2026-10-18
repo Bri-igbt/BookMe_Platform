@@ -78,12 +78,10 @@ export default function Page() {
 
   const showToast = userToast();
 
-  // Update the service list safely.
   const applyServices = useCallback((items) => {
     setServices(Array.isArray(items) ? items : []);
   }, []);
 
-  // Fetch services from the backend.
   const loadServices = useCallback(async () => {
     try {
       const { data } = await listServices();
@@ -117,7 +115,6 @@ export default function Page() {
     loadServices();
   }, [loadServices]);
 
-  // Handle changes in form inputs.
   const handleChange = (event) => {
     const { name, value } = event.target;
 
@@ -127,7 +124,6 @@ export default function Page() {
     }));
   };
 
-  // Create a new service or update an existing service.
   const handleSubmit = async (event) => {
     event.preventDefault();
 

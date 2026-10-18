@@ -20,7 +20,7 @@ const walletTransactionSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ["booking_payout", "withdrawl_hold", "withdrawl_reversal"],
+      enum: ["booking_payout", "withdrawal_hold", "withdrawal_reversal"],
       required: true,
     },
     amount: {
