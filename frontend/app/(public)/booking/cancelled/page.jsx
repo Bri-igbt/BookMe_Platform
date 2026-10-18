@@ -1,21 +1,24 @@
-'use client'
 
-import { useEffect } from "react"
+"use client";
+
+import { Suspense, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import Link from "next/link.js";
-import { cancelPublicBookingPayments } from "@/app/api/public.js";
+import Link from "next/link";
 import { XCircle, ArrowLeft } from "lucide-react";
+import { cancelPublicBookingPayments } from "@/app/api/public.js";
 import { bookingCancelledPageStyles as s } from "@/app/assets/dummyStyles.jsx";
 
-const page = () => {
-  const [searchParams] = useSearchParams();
+function CancelledContent() {
+  const searchParams = useSearchParams();
+
+  const bookingId = searchParams.get("booking_id");
+  const slug = searchParams.get("slug");
 
   useEffect(() => {
-    const bookingId = searchParams.get("booking_id");
     if (bookingId) {
-      cancelPublicBookingPayments(bookingId).catch(() => {});
-    };
-  }, [searchParams]);
+      cancelPublicBookingPayments(bookingId).catch(() => { });
+    }
+  }, [bookingId]);
 
   return (
     <div className={s.container}>
@@ -25,15 +28,18 @@ const page = () => {
         </div>
 
         <p className={s.statusLabel}>Payment cancelled</p>
+
         <p className={s.heading}>
-          Your booking was not confimed
-        </p>
-        <p className={s.description}>
-          No payment was completed. You can return to the booking page and choose a slot again.
+          Your booking was not confirmed
         </p>
 
-        <Link 
-          href={searchParams.get('slug') ? `/book/${searchParams.get('slug')}` : "" } 
+        <p className={s.description}>
+          No payment was completed. You can return to the booking
+          page and choose a slot again.
+        </p>
+
+        <Link
+          href={slug ? `/book/${slug}` : "/"}
           className={s.homeLink}
         >
           <ArrowLeft className={s.homeLinkIcon} />
@@ -41,7 +47,23 @@ const page = () => {
         </Link>
       </main>
     </div>
-  )
+  );
 }
 
-export default page;
+export default function BookingCancelledPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className={s.container}>
+          <main className={s.card}>
+            <p className={s.description}>
+              Loading booking information...
+            </p>
+          </main>
+        </div>
+      }
+    >
+      <CancelledContent />
+    </Suspense>
+  );
+}
