@@ -1,6 +1,7 @@
 # BookMe
+
 <p>
-  <img src='https://res.cloudinary.com/dhdcmkuhx/image/upload/f_auto/q_auto/Screenshot_2026-10-19_at_10.58.22_uohnep.png' alt='image' width='400' height='400' />
+  <img src='https://res.cloudinary.com/dhdcmkuhx/image/upload/f_auto/q_auto/Screenshot_2026-10-19_at_10.58.22_uohnep.png' alt='image' width="800"  />
 <p/>
 
 BookMe is a full-stack appointment scheduling and booking platform. A business owner creates a profile, adds services, sets weekly availability and shares one clean booking link. Customers pick a time, verify their email, pay online (or book for free) and get a confirmation with a Google Calendar link. Owners track bookings, earnings and withdrawals from a dashboard, and an admin approves payout requests.
