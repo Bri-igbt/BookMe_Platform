@@ -15,13 +15,22 @@ const app = express();
 
 app.set("trust proxy", 1);
 
+const toOrigin = (value) => {
+  try {
+    return new URL(value.trim()).origin;
+  } catch (error) {
+    return value.trim().replace(/\/+$/, "");
+  }
+};
+
 const allowedOrigins = [
   "http://localhost:3000",
   process.env.CLIENT_URL,
   ...(process.env.ALLOWED_ORIGINS || "").split(","),
 ]
   .filter(Boolean)
-  .map((origin) => origin.trim().replace(/\/+$/, ""));
+  .map(toOrigin)
+  .filter(Boolean);
 
 app.use(
   cors({
@@ -76,6 +85,10 @@ app.get("/api/health", (req, res) => {
   res.json({
     ok: true,
     clientUrlSet: Boolean(process.env.CLIENT_URL),
+    emailKeySet: Boolean(process.env.BREVO_API_KEY),
+    emailSenderSet: Boolean(
+      process.env.BREVO_SENDER_EMAIL || process.env.EMAIL_FROM
+    ),
     allowedOrigins,
   });
 });
